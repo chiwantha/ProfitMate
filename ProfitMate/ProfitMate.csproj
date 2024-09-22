@@ -331,6 +331,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Congig\Logo-01.ico" />
+    <Content Include="txte.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
