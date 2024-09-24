@@ -43,6 +43,7 @@ namespace ProfitMate.Forms
                 //txt_p_float.Enabled = false;
                 //txt_m_float.Enabled = false;
                 txt_Available_cash.Enabled = false;
+                cbxAvailableCashAutoManual.Visible = false;
                 //txt_real_card_sale.Enabled = false;
                 //txt_OnHand.Enabled = false;
                 //txt_Bank.Enabled = false;
@@ -173,7 +174,6 @@ namespace ProfitMate.Forms
                 MessageBox.Show("Error while updating record: " + ex.Message);
             }
         }
-
 
 
 
@@ -314,7 +314,6 @@ namespace ProfitMate.Forms
             txt_FinalTotal.Text = total.ToString("N2");
             txt_Balance_Foword.Text = balanceForward.ToString("N2");
         }
-
 
 
 
@@ -537,6 +536,7 @@ namespace ProfitMate.Forms
 
         //------------------------------------------------------------------------------------------------Load funcs
 
+        /*
         private async Task LoadAvailableCashAsync(string date)
         {
             try
@@ -604,6 +604,105 @@ namespace ProfitMate.Forms
                 MessageBox.Show("An error occurred while connecting to the database.");
             }
         }
+        */
+
+        private async Task LoadAvailableCashAsync(string date)
+        {
+            try
+            {
+                using (SqlConnection con = connection.my_conn())
+                {
+                    if (con.State != ConnectionState.Open)
+                    {
+                        await con.OpenAsync();
+                    }
+
+                    try
+                    {
+                        string selectQuery = "";
+                        bool applyAdjustment = false; // Flag to determine if the -4000 adjustment should be applied
+
+                        // If cbxAvailableCashAutoManual is checked, fetch data from TblTrnCashier
+                        if (!cbxAvailableCashAutoManual.Checked)
+                        {
+                            selectQuery = @"
+                    SELECT TOP 1 
+                        CAST([CashDrawer] AS DECIMAL(18, 2)) AS LastCashDrawer
+                    FROM 
+                        [HMS].[dbo].[TblTrnCashier]
+                    WHERE 
+                        CONVERT(VARCHAR(10), [SOTime], 120) = @Date
+                    ORDER BY 
+                        [SOTime] DESC";
+
+                            applyAdjustment = true; // Set the flag to apply the -4000 adjustment
+                        }
+                        // If cbxAvailableCashAutoManual is not checked, fetch data from TblMPR_Report
+                        else
+                        {
+                            selectQuery = @"
+                    SELECT TOP 1 
+                        CAST([available_cash] AS DECIMAL(18, 2)) AS LastCashDrawer
+                    FROM 
+                        [HMS].[dbo].[TblMPR_Report]
+                    WHERE 
+                        CONVERT(VARCHAR(10), [date], 120) = @Date
+                    ORDER BY 
+                        [date] DESC";
+
+                            applyAdjustment = false; // Do not apply the adjustment for TblMPR_Report
+                        }
+
+                        using (SqlCommand cmd = new SqlCommand(selectQuery, con))
+                        {
+                            cmd.Parameters.AddWithValue("@Date", date);
+
+                            SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+                            if (reader.HasRows)
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    // Get the LastCashDrawer value
+                                    decimal lastCashDrawer = reader.GetDecimal(reader.GetOrdinal("LastCashDrawer"));
+
+                                    // Apply -4000 adjustment only if data is fetched from TblTrnCashier
+                                    if (applyAdjustment)
+                                    {
+                                        lastCashDrawer -= 4000;
+                                    }
+
+                                    // Set the value to the txt_Available_cash textbox
+                                    txt_Available_cash.Text = lastCashDrawer.ToString("F2");
+                                }
+                            }
+                            else
+                            {
+                                // If no data is found, set to 0.00
+                                txt_Available_cash.Text = "0.00";
+                            }
+
+                            reader.Close();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show("An error occurred while retrieving data: " + e.Message);
+                    }
+
+                    if (con.State == ConnectionState.Open)
+                    {
+                        con.Close();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("An error occurred while connecting to the database.");
+            }
+        }
+
+
 
         private async Task Hms_Data_Load(string date)
         {
@@ -756,7 +855,7 @@ namespace ProfitMate.Forms
                                 {
                                     // Load the data
                                     string selectQuery = @"
-                            SELECT cashier_name, sale, flotP, expences, flotM, balance_1, hms_card_sale, real_card_sale, difference, fee, balance_2, available_cash, cash_ex_sh, on_hand, bank, balance_foword
+                            SELECT cashier_name, sale, flotP, expences, flotM, balance_1, hms_card_sale, real_card_sale, difference, fee, balance_2, ac_state, available_cash, cash_ex_sh, on_hand, bank, balance_foword
                             FROM TblMPR_Report 
                             WHERE date = @ReportDate";
 
@@ -770,6 +869,15 @@ namespace ProfitMate.Forms
                                             {
                                                 while (await reader.ReadAsync())
                                                 {
+                                                    if (reader["ac_state"] != DBNull.Value && Convert.ToBoolean(reader["ac_state"]))
+                                                    {
+                                                        cbxAvailableCashAutoManual.Checked = true;
+                                                    }
+                                                    else if (reader["ac_state"] == DBNull.Value || !Convert.ToBoolean(reader["ac_state"]))
+                                                    {
+                                                        cbxAvailableCashAutoManual.Checked = false;
+                                                    }
+
                                                     // Ensure that each value is parsed as a decimal and formatted to 2 decimal places ("F2")
                                                     txtCashierName.Text = reader["cashier_name"].ToString(); // No formatting needed for string
 
@@ -817,6 +925,7 @@ namespace ProfitMate.Forms
                             }
                             else
                             {
+                                cbxAvailableCashAutoManual.Checked = false;
                                 MessageBox.Show("No data available for the selected date.");
                             }
                         }
@@ -1699,7 +1808,7 @@ namespace ProfitMate.Forms
                         sameday_billing();
                     }
                 }
-
+                
                 cb_txt_p_bill_no.Text = "";
                 cb_txt_p_bill_supplier.Text = "";
 
@@ -1707,7 +1816,21 @@ namespace ProfitMate.Forms
                 await purchesing_bill_no();
                 await purchesing_bill_supplier();
                 await GetReportDataWhichAlreadyHave();
-                await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                if (!frmlvl)
+                {
+                    if (!cbxAvailableCashAutoManual.Checked)
+                    {
+                        await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                    } else
+                    {
+                        await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                    }
+                } else
+                {
+                    await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                }
+   
+                
                 await GetLastMprCashForward();
                 try
                 {
@@ -1806,7 +1929,18 @@ namespace ProfitMate.Forms
         private async void btnBuild_Click(object sender, EventArgs e)
         {
             await Hms_Data_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
-            await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+            
+            if (!frmlvl)
+            {
+                if (!cbxAvailableCashAutoManual.Checked)
+                {
+                    await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                }
+            }else
+            {
+                await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+            }
+
             //MessageBox.Show("wait");
             if ( bil ) {
                 MessageBox.Show("Please End the Bill First !", "WARNING !", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -1850,7 +1984,7 @@ namespace ProfitMate.Forms
 
                                 query = "UPDATE TblMPR_Report SET sale = @sale, cashier_name=@cashier_name, flotP = @flotP, expences = @expences, flotM = @flotM, " +
                                         "balance_1 = @balance_1, hms_card_sale = @hms_card_sale, real_card_sale = @real_card_sale, " +
-                                        "difference = @difference, fee = @fee, balance_2 = @balance_2, available_cash = @available_cash, " +
+                                        "difference = @difference, fee = @fee, balance_2 = @balance_2, available_cash = @available_cash, ac_state=@ac_state," +
                                         "cash_ex_sh = @cash_ex_sh, on_hand = @on_hand, total = @total, bank = @bank, " +
                                         "balance_foword = @balance_foword, report_created_date = @report_created_date " +
                                         "WHERE date = @date";
@@ -1859,9 +1993,9 @@ namespace ProfitMate.Forms
                             {
                                 // Insert new record
                                 query = "INSERT INTO TblMPR_Report (date, cashier_name, sale, flotP, expences, flotM, balance_1, hms_card_sale, real_card_sale, difference, fee, balance_2, " +
-                                        "available_cash, cash_ex_sh, on_hand, total, bank, balance_foword, report_created_date) " +
+                                        "ac_state ,available_cash, cash_ex_sh, on_hand, total, bank, balance_foword, report_created_date) " +
                                         "VALUES (@date,@cashier_name, @sale, @flotP, @expences, @flotM, @balance_1, @hms_card_sale, @real_card_sale, @difference, @fee, @balance_2, " +
-                                        "@available_cash, @cash_ex_sh, @on_hand, @total, @bank, @balance_foword, @report_created_date)";
+                                        "@ac_state ,@available_cash, @cash_ex_sh, @on_hand, @total, @bank, @balance_foword, @report_created_date)";
                             }
 
                             using (SqlCommand cmd = new SqlCommand(query, con))
@@ -1879,6 +2013,7 @@ namespace ProfitMate.Forms
                                 cmd.Parameters.AddWithValue("@fee", string.IsNullOrEmpty(txt_card_missing_expense.Text) ? "0.00" : txt_card_missing_expense.Text);
                                 cmd.Parameters.AddWithValue("@balance_2", string.IsNullOrEmpty(bal_after_card_expences.Text) ? "0.00" : bal_after_card_expences.Text);
                                 cmd.Parameters.AddWithValue("@available_cash", string.IsNullOrEmpty(txt_Available_cash.Text) ? "0.00" : txt_Available_cash.Text);
+                                cmd.Parameters.AddWithValue("@ac_state", cbxAvailableCashAutoManual.Checked ? 1 : 0);
                                 cmd.Parameters.AddWithValue("@cash_ex_sh", string.IsNullOrEmpty(txt_Cash_ExorShort.Text) ? "0.00" : txt_Cash_ExorShort.Text);
                                 cmd.Parameters.AddWithValue("@on_hand", string.IsNullOrEmpty(txt_OnHand.Text) ? "0.00" : txt_OnHand.Text);
                                 cmd.Parameters.AddWithValue("@total", string.IsNullOrEmpty(txt_FinalTotal.Text) ? "0.00" : txt_FinalTotal.Text);
@@ -2351,5 +2486,18 @@ namespace ProfitMate.Forms
             btn_create_bill.PerformClick();
         }
 
+        private async void cbxAvailableCashAutoManual_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!frmlvl)
+            {
+                if (!cbxAvailableCashAutoManual.Checked)
+                {
+                    await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                } else
+                {
+                    await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                }
+            }
+        }
     }
 }
