@@ -273,3 +273,4 @@ E:\C#\Finished\ProfitMate\ProfitMate\obj\x64\Release\ProfitMate.csproj.CoreCompi
 E:\C#\Finished\ProfitMate\ProfitMate\obj\x64\Release\ProfitMate.csproj.CopyComplete
 E:\C#\Finished\ProfitMate\ProfitMate\obj\x64\Release\ProfitMate.exe
 E:\C#\Finished\ProfitMate\ProfitMate\obj\x64\Release\ProfitMate.pdb
+E:\C#\Finished\ProfitMate\ProfitMate\obj\x64\Release\ProfitMate.Forms.frmMPR_MONTHLY.resources

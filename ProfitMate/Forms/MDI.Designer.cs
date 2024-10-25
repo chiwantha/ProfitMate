@@ -40,15 +40,15 @@
             this.button1 = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.hOMEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.rESTARTToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pURCHESINGREPORTToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mSTITEMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lOGSToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.dATABASEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aBOUTToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.usernamestrip = new System.Windows.Forms.ToolStripStatusLabel();
-            this.rESTARTToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mONTHLYPURCHESINGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.MainPannel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.btnPannel.SuspendLayout();
@@ -189,9 +189,9 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.hOMEToolStripMenuItem,
             this.pURCHESINGREPORTToolStripMenuItem,
+            this.mONTHLYPURCHESINGToolStripMenuItem,
             this.mSTITEMToolStripMenuItem,
             this.lOGSToolStripMenuItem,
-            this.dATABASEToolStripMenuItem,
             this.aBOUTToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -208,6 +208,14 @@
             this.hOMEToolStripMenuItem.Size = new System.Drawing.Size(70, 20);
             this.hOMEToolStripMenuItem.Text = "HOME";
             this.hOMEToolStripMenuItem.Click += new System.EventHandler(this.hOMEToolStripMenuItem_Click);
+            // 
+            // rESTARTToolStripMenuItem
+            // 
+            this.rESTARTToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("rESTARTToolStripMenuItem.Image")));
+            this.rESTARTToolStripMenuItem.Name = "rESTARTToolStripMenuItem";
+            this.rESTARTToolStripMenuItem.Size = new System.Drawing.Size(118, 22);
+            this.rESTARTToolStripMenuItem.Text = "RESTART";
+            this.rESTARTToolStripMenuItem.Click += new System.EventHandler(this.rESTARTToolStripMenuItem_Click);
             // 
             // pURCHESINGREPORTToolStripMenuItem
             // 
@@ -233,18 +241,12 @@
             this.lOGSToolStripMenuItem.Text = "LOGS";
             this.lOGSToolStripMenuItem.Click += new System.EventHandler(this.lOGSToolStripMenuItem_Click);
             // 
-            // dATABASEToolStripMenuItem
-            // 
-            this.dATABASEToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("dATABASEToolStripMenuItem.Image")));
-            this.dATABASEToolStripMenuItem.Name = "dATABASEToolStripMenuItem";
-            this.dATABASEToolStripMenuItem.Size = new System.Drawing.Size(90, 20);
-            this.dATABASEToolStripMenuItem.Text = "DATABASE";
-            this.dATABASEToolStripMenuItem.Click += new System.EventHandler(this.dATABASEToolStripMenuItem_Click);
-            // 
             // aBOUTToolStripMenuItem
             // 
+            this.aBOUTToolStripMenuItem.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.aBOUTToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("aBOUTToolStripMenuItem.Image")));
             this.aBOUTToolStripMenuItem.Name = "aBOUTToolStripMenuItem";
+            this.aBOUTToolStripMenuItem.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.aBOUTToolStripMenuItem.Size = new System.Drawing.Size(73, 20);
             this.aBOUTToolStripMenuItem.Text = "ABOUT";
             this.aBOUTToolStripMenuItem.Click += new System.EventHandler(this.aBOUTToolStripMenuItem_Click);
@@ -277,13 +279,13 @@
             this.usernamestrip.Size = new System.Drawing.Size(59, 17);
             this.usernamestrip.Text = "username";
             // 
-            // rESTARTToolStripMenuItem
+            // mONTHLYPURCHESINGToolStripMenuItem
             // 
-            this.rESTARTToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("rESTARTToolStripMenuItem.Image")));
-            this.rESTARTToolStripMenuItem.Name = "rESTARTToolStripMenuItem";
-            this.rESTARTToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.rESTARTToolStripMenuItem.Text = "RESTART";
-            this.rESTARTToolStripMenuItem.Click += new System.EventHandler(this.rESTARTToolStripMenuItem_Click);
+            this.mONTHLYPURCHESINGToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("mONTHLYPURCHESINGToolStripMenuItem.Image")));
+            this.mONTHLYPURCHESINGToolStripMenuItem.Name = "mONTHLYPURCHESINGToolStripMenuItem";
+            this.mONTHLYPURCHESINGToolStripMenuItem.Size = new System.Drawing.Size(165, 20);
+            this.mONTHLYPURCHESINGToolStripMenuItem.Text = "MONTHLY PURCHESING";
+            this.mONTHLYPURCHESINGToolStripMenuItem.Click += new System.EventHandler(this.mONTHLYPURCHESINGToolStripMenuItem_Click);
             // 
             // MDI
             // 
@@ -328,10 +330,10 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.ToolStripMenuItem mSTITEMToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem lOGSToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem dATABASEToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aBOUTToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem hOMEToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pURCHESINGREPORTToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem rESTARTToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mONTHLYPURCHESINGToolStripMenuItem;
     }
 }

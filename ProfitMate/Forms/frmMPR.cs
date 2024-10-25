@@ -27,6 +27,9 @@ namespace ProfitMate.Forms
         bool frmlvl = true;
         bool once = false;
         bool bil = false;
+        decimal OLD_BF = 0;
+        decimal NEW_BF = 0;
+
         public frmMPR(bool lvl)
         {
             InitializeComponent();
@@ -912,7 +915,9 @@ namespace ProfitMate.Forms
                                                         txt_Bank.Text = bank.ToString("N2");
 
                                                     //txt_Balance_Foword.Text = reader["balance_foword"].ToString();
+                                                    OLD_BF = Convert.ToDecimal(reader["balance_foword"]);
                                                     //txt_FinalTotal.Text = reader["balance_foword"].ToString();
+
                                                 }
                                             }
                                             else
@@ -1126,6 +1131,94 @@ namespace ProfitMate.Forms
             }
         }
 
+        private async Task UpdateBalances(string targetDate, decimal differenceAmount)
+        {
+            try
+            {
+                using (SqlConnection con = connection.my_conn())
+                {
+                    // Open the connection asynchronously
+                    await con.OpenAsync();
+
+                    // Start a SQL transaction
+                    using (SqlTransaction transaction = con.BeginTransaction())
+                    {
+                        try
+                        {
+                            // Check if future dates exist
+                            string checkFutureDatesQuery = @"
+                    SELECT COUNT(*) 
+                    FROM TblMPR_Report 
+                    WHERE CONVERT(VARCHAR(10), [date], 120) > @targetDate";
+
+                            using (SqlCommand checkCmd = new SqlCommand(checkFutureDatesQuery, con, transaction))
+                            {
+                                checkCmd.Parameters.AddWithValue("@targetDate", targetDate);
+                                int futureDateCount = (int)await checkCmd.ExecuteScalarAsync();
+
+                                if (futureDateCount > 0)
+                                {
+                                    // If there are future dates, update ON_HAND and BALANCE_FORWARD for target date and future dates
+                                    string updateQuery = @"
+                            UPDATE TblMPR_Report
+                            SET 
+                                on_hand = on_hand + @differenceAmount,
+                                balance_foword = balance_foword + @differenceAmount
+                            WHERE 
+                                CONVERT(VARCHAR(10), [date], 120) > @targetDate";
+
+                                    using (SqlCommand cmd = new SqlCommand(updateQuery, con, transaction))
+                                    {
+                                        // Add parameters
+                                        cmd.Parameters.AddWithValue("@differenceAmount", differenceAmount);
+                                        cmd.Parameters.AddWithValue("@targetDate", targetDate);
+
+                                        // Execute the update command
+                                        await cmd.ExecuteNonQueryAsync();
+                                    }
+                                }
+                                else
+                                {
+                                    // If no future dates are available, only update the target date
+                                    string updateOnlyTargetDateQuery = @"
+                            UPDATE TblMPR_Report
+                            SET 
+                                on_hand = on_hand + @differenceAmount,
+                                balance_foword = balance_foword + @differenceAmount
+                            WHERE 
+                                CONVERT(VARCHAR(10), [date], 120) = @targetDate";
+
+                                    using (SqlCommand cmd = new SqlCommand(updateOnlyTargetDateQuery, con, transaction))
+                                    {
+                                        // Add parameters
+                                        cmd.Parameters.AddWithValue("@differenceAmount", differenceAmount);
+                                        cmd.Parameters.AddWithValue("@targetDate", targetDate);
+
+                                        // Execute the update command
+                                        await cmd.ExecuteNonQueryAsync();
+                                    }
+                                }
+                            }
+
+                            // Commit the transaction
+                            transaction.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            // Rollback the transaction in case of an error
+                            transaction.Rollback();
+                            MessageBox.Show("Error updating balances: " + ex.Message);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening the connection: " + ex.Message);
+            }
+        }
+
+
 
         //------------------------------------------------------------------------------------------------Cancelled Bill Section Handle
 
@@ -1136,7 +1229,7 @@ namespace ProfitMate.Forms
             txt_cancessBill_amount.Text = "Amount";
         }
 
-        private void btnCanellBillAdd_Click(object sender, EventArgs e)
+        private async void btnCanellBillAdd_Click(object sender, EventArgs e)
         {
             if (txt_cancelBill_no.Text == "" || txt_cancelBill_no.Text == "Bill No")
             {
@@ -1180,13 +1273,13 @@ namespace ProfitMate.Forms
                     MessageBox.Show(ex.Message);
                 }
 
-                CancelledBills_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                await CancelledBills_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
                 clear_cancell_bill_inouts();
                 txt_cancelBill_no.Focus();
             }
         }
 
-        private async void CancelledBills_Load(string Date)
+        private async Task CancelledBills_Load(string Date)
         {
             try
             {
@@ -1308,7 +1401,7 @@ namespace ProfitMate.Forms
             }
         }
 
-        private void dgCancelledBills_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dgCancelledBills_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             // Check if the clicked cell is in the "Delete" button column
             if (dgCancelledBills.Columns[e.ColumnIndex].Name == "Remove" && e.RowIndex >= 0)
@@ -1319,7 +1412,7 @@ namespace ProfitMate.Forms
                 DeleteRecord(id, "id", "TblManualClancelBills");
 
                 // Optionally, refresh the DataGridView after deletion
-                CancelledBills_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                await CancelledBills_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
             }
         }
 
@@ -1364,7 +1457,7 @@ namespace ProfitMate.Forms
             txt_optional_disc.Text = "Note*";
         }
 
-        private void btnPurchesingAdd_Click(object sender, EventArgs e)
+        private async void btnPurchesingAdd_Click(object sender, EventArgs e)
         {
             
             if (cbPurchesingDescription.Text == "")
@@ -1413,14 +1506,14 @@ namespace ProfitMate.Forms
                     MessageBox.Show(ex.Message);
                 }
 
-                Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                await Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
                 clear_purchesing_inouts();
                 txtPurchesingId.Focus();
                 once = false;
             }
         }
 
-        private async void Purchesting_Load(string Date)
+        private async Task Purchesting_Load(string Date)
         {
             try
             {
@@ -1564,7 +1657,7 @@ namespace ProfitMate.Forms
             }
         }
 
-        private void dgPurchesing_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dgPurchesing_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             // Check if the clicked cell is in the "Delete" button column
             if (dgPurchesing.Columns[e.ColumnIndex].Name == "Delete" && e.RowIndex >= 0)
@@ -1584,7 +1677,7 @@ namespace ProfitMate.Forms
                 }
 
                 // Optionally, refresh the DataGridView after deletion
-                Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                await Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
             }
         }
 
@@ -1641,7 +1734,7 @@ namespace ProfitMate.Forms
             }
         }
 
-        private void DgPcredit_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void DgPcredit_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             // Check if the clicked cell is in the "Delete" button column
             if (DgPcredit.Columns[e.ColumnIndex].Name == "Pay" && e.RowIndex >= 0)
@@ -1652,7 +1745,7 @@ namespace ProfitMate.Forms
                     int id = Convert.ToInt32(DgPcredit.Rows[e.RowIndex].Cells["pcid"].Value);
                     Decide_Paied(id);
                     LoadCreditToGrid();
-                    Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                    await Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
                 }
                 catch
                 {
@@ -1663,7 +1756,7 @@ namespace ProfitMate.Forms
 
         //------------------------------------------------------------------------------------------------Staff Section Handle
 
-        private void btnStaffAdvanceAdd_Click(object sender, EventArgs e)
+        private async void btnStaffAdvanceAdd_Click(object sender, EventArgs e)
         {
             try
             {
@@ -1696,10 +1789,10 @@ namespace ProfitMate.Forms
             cbStaffDiscription.Text = "Enter Discription";
             txtStaffAmount.Text = "Amount";
             cbStaffDiscription.Focus();
-            StaffExpencess_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+            await StaffExpencess_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
         }
 
-        private async void StaffExpencess_Load(string Date)
+        private async Task StaffExpencess_Load(string Date)
         {
             try
             {
@@ -1766,7 +1859,7 @@ namespace ProfitMate.Forms
             }
         }
 
-        private void dgStaffAdvance_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dgStaffAdvance_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             // Check if the clicked cell is in the "Delete" button column
             if (dgStaffAdvance.Columns[e.ColumnIndex].Name == "DeleteA" && e.RowIndex >= 0)
@@ -1778,7 +1871,7 @@ namespace ProfitMate.Forms
                 DeleteRecord(id, "id", "TblStaffExpences");
 
                 // Optionally, refresh the DataGridView after deletion
-                StaffExpencess_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                await StaffExpencess_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
             }
         }
 
@@ -1786,6 +1879,7 @@ namespace ProfitMate.Forms
 
         private async void btnNew_Click(object sender, EventArgs e)
         {
+            OLD_BF = 0;
             if (bil)
             {
                 MessageBox.Show("Please End the Bill First !", "WARNING !", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -1834,15 +1928,19 @@ namespace ProfitMate.Forms
                 await GetLastMprCashForward();
                 try
                 {
-                    CancelledBills_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
-                    Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
-                    StaffExpencess_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                    await CancelledBills_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                    await Purchesting_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
+                    await StaffExpencess_Load(dtpReportDate.Value.ToString("yyyy-MM-dd"));
                 } catch {
                     MessageBox.Show("Purchesing, Manual Cancell, StaffExpences Error !", "Error !");
                 }
-                
+                if (OLD_BF == 0)
+                {
+                    OLD_BF = Convert.ToDecimal(txt_Balance_Foword.Text);
+                }
                 txt_m_float.Text = "0";
                 txt_m_float.Text = "40000.00";
+                MessageBox.Show(OLD_BF.ToString());
             }
         }
 
@@ -2030,7 +2128,7 @@ namespace ProfitMate.Forms
                         {
                             con.Close();
                         }
-
+                        await UpdateBalances(dtpReportDate.Value.ToString("yyyy-MM-dd"), NEW_BF - OLD_BF);
                         Make_Build_Logs(txtCashierName.Text);
                         CreateReport();
                     }
@@ -2498,6 +2596,11 @@ namespace ProfitMate.Forms
                     await LoadAvailableCashAsync(dtpReportDate.Value.ToString("yyyy-MM-dd"));
                 }
             }
+        }
+
+        private void txt_Balance_Foword_TextChanged(object sender, EventArgs e)
+        {
+            NEW_BF = Convert.ToDecimal(txt_Balance_Foword.Text);
         }
     }
 }

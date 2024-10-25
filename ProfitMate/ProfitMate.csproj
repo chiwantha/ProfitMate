@@ -57,7 +57,7 @@
     </StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Congig\Logo-01.ico</ApplicationIcon>
+    <ApplicationIcon>Config\Logo-01.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AxShockwaveFlashObjects, Version=1.0.0.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
@@ -256,6 +256,12 @@
     <Compile Include="Forms\frmMPR.Designer.cs">
       <DependentUpon>frmMPR.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\frmMPR_MONTHLY.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmMPR_MONTHLY.Designer.cs">
+      <DependentUpon>frmMPR_MONTHLY.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\frmReportLog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -292,6 +298,9 @@
     <EmbeddedResource Include="Forms\frmMPR.resx">
       <DependentUpon>frmMPR.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmMPR_MONTHLY.resx">
+      <DependentUpon>frmMPR_MONTHLY.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmReportLog.resx">
       <DependentUpon>frmReportLog.cs</DependentUpon>
     </EmbeddedResource>
@@ -314,7 +323,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <None Include="app.config" />
-    <None Include="Congig\packages.config" />
+    <None Include="Config\packages.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -327,10 +336,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Congig\App.config" />
+    <None Include="Config\App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Congig\Logo-01.ico" />
+    <Content Include="Config\Logo-01.ico" />
     <Content Include="txte.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

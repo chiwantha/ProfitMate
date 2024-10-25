@@ -168,5 +168,11 @@ namespace ProfitMate
         {
             Application.Restart();
         }
+
+        private void mONTHLYPURCHESINGToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmMPR_MONTHLY frmMPR_MONTHLY = new frmMPR_MONTHLY();
+            frmMPR_MONTHLY.ShowDialog(this);
+        }
     }
 }
